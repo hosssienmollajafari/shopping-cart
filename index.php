@@ -1,9 +1,38 @@
 <?php
+
+//start session
+session_start();
+
 require_once("./php/CreateDb.php");
 require_once('./php/component.php');
 
 // create instance of CreateDb class
 $database = new CreateDb("Productdb", "Producttb");
+
+if (isset($_POST['add'])) {
+    // print_r($_POST['product_id']);
+    if (isset($_SESSION['cart'])) {
+        $item_array_id = array_column($_SESSION['cart'], "product_id");
+
+        if(in_array($_POST['product_id'], $item_array_id)) {
+            echo "<script>alert('محصول در سبد خرید موجود است.')</script>";
+            echo "<script>window.location = 'index.php'</script>";
+        } else {
+            $count = count($_SESSION['cart']);
+            $item_array = array(
+                'product_id' => $_POST['product_id']
+            );
+            $_SESSION['cart'][$count] = $item_array;
+        }
+    } else {
+        $item_array = array(
+            'product_id' => $_POST['product_id']
+        );
+
+        // create new session variable
+        $_SESSION['cart'][0] = $item_array;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -25,14 +54,16 @@ $database = new CreateDb("Productdb", "Producttb");
 </head>
 
 <body>
+    <?php 
+        require_once('./php/header.php');
+    ?>
     <div class="container">
         <div class="row text-center py-5">
             <?php
-            component("محصول شماره 1", 1500, 'upload/product1.png');
-            component("محصول شماره 2", 1054, 'upload/product2.png');
-            component("محصول شماره 3", 380, 'upload/product3.png');
-            component("محصول شماره 4", 890, 'upload/product4.png');
-
+            $result = $database->getData();
+            while ($row = mysqli_fetch_assoc($result)) {
+                component($row['product_name'], $row['product_price'], $row['product_image'], $row['id']);
+            }
             ?>
         </div>
     </div>
